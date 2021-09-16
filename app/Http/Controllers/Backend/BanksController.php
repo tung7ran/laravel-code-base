@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Models\Finace\Banks;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
@@ -12,6 +13,7 @@ use App\Http\Requests\Finace\BanksCreateRequest;
 use App\Http\Requests\Finace\BanksUpdateRequest;
 use App\Repositories\Finace\BanksRepository;
 use App\Validators\Finace\BanksValidator;
+use Yajra\DataTables\Facades\DataTables;
 
 /**
  * Class BanksController.
@@ -42,24 +44,84 @@ class BanksController extends Controller
         $this->validator  = $validator;
     }
 
+    protected function module(){
+        return [
+            'name' => 'Tài khoản ngân hàng',
+            'module' => 'banks',
+            'table' =>[
+                'image' => [
+                    'title' => 'Hình ảnh',
+                    'with' => '70px',
+                ],
+                'name_bank' => [
+                    'title' => 'Tên ngân hàng',
+                    'with' => '',
+                ],
+                'name_account' => [
+                    'title' => 'Tên chủ thẻ',
+                    'with' => '',
+                ],
+                'status' => [
+                    'title' => 'Trạng thái',
+                    'with' => '100px',
+                ],
+            ]
+        ];
+    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $this->repository->pushCriteria(app('Prettus\Repository\Criteria\RequestCriteria'));
-        $banks = $this->repository->all();
-
-        if (request()->wantsJson()) {
-
-            return response()->json([
-                'data' => $banks,
-            ]);
+        if ($request->ajax()) {
+            $list_bank = Banks::orderBy('created_at', 'DESC')->get();
+            return Datatables::of($list_bank)
+                ->addColumn('checkbox', function ($data) {
+                    return '<input type="checkbox" name="chkItem[]" value="' . $data->id . '">';
+                })
+                ->addColumn('image', function ($data) {
+                    return '<img src="' . $data->image . '" class="img-thumbnail" width="50px" height="50px">';
+                })->addColumn('name_bank', function ($data) {
+                    return $data->name_bank;
+                })->addColumn('name_account', function ($data) {
+                    return $data->name_account;
+                })->addColumn('status', function ($data) {
+                    if ($data->status == 1) {
+                        $status = ' <span class="label label-success">Hiển thị</span>';
+                    } else {
+                        $status = ' <span class="label label-danger">Không hiển thị</span>';
+                    }
+                    return $status;
+                })
+                ->addColumn('action', function ($data) {
+                    return '<a href="' . route('banks.edit', ['id' => $data->id ]) . '" title="Sửa">
+                            <i class="fa fa-pencil fa-fw"></i> Sửa
+                        </a> &nbsp; &nbsp; &nbsp;
+                            <a href="javascript:;" class="btn-destroy"
+                            data-href="' . route('banks.destroy', $data->id) . '"
+                            data-toggle="modal" data-target="#confim">
+                            <i class="fa fa-trash-o fa-fw"></i> Xóa</a>
+                        ';
+                })
+                ->rawColumns(['checkbox', 'image', 'status', 'action', 'name_bank', 'name_account'])
+                ->addIndexColumn()
+                ->make(true);
         }
+        $data['module'] = $this->module();
+        return view("backend.{$this->module()['module']}.list", $data);
+    }
 
-        return view('banks.index', compact('banks'));
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        $data['module'] = $this->module();
+        return view("backend.{$this->module()['module']}.create", $data);
     }
 
     /**
@@ -74,7 +136,6 @@ class BanksController extends Controller
     public function store(BanksCreateRequest $request)
     {
         try {
-
             $this->validator->with($request->all())->passesOrFail(ValidatorInterface::RULE_CREATE);
 
             $bank = $this->repository->create($request->all());
@@ -200,5 +261,21 @@ class BanksController extends Controller
         }
 
         return redirect()->back()->with('message', 'Banks deleted.');
+    }
+
+    /**
+     * Remove multiple
+     */
+    public function deleteMuti(Request $request)
+    {
+        if(!empty($request->chkItem)){
+            foreach ($request->chkItem as $id) {
+                Banks::destroy($id);
+            }
+            flash('Xóa thành công.')->success();
+            return back();
+        }
+        flash('Bạn chưa chọn dữ liệu cần xóa.')->error();
+        return back();
     }
 }

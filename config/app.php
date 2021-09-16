@@ -174,8 +174,17 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\RepositoryServiceProvider::class,
         Prettus\Repository\Providers\RepositoryServiceProvider::class,
         Artesaos\SEOTools\Providers\SEOToolsServiceProvider::class,
+        Collective\Html\HtmlServiceProvider::class,
+        \InfyOm\Generator\InfyOmGeneratorServiceProvider::class,
+        \InfyOm\AdminLTETemplates\AdminLTETemplatesServiceProvider::class,
+        \InfyOm\GeneratorBuilder\GeneratorBuilderServiceProvider::class,
+
+        Artesaos\SEOTools\Providers\SEOToolsServiceProvider::class,
+        Gloudemans\Shoppingcart\ShoppingcartServiceProvider::class,
+        Proengsoft\JsValidation\JsValidationServiceProvider::class,
     ],
 
     /*
@@ -231,7 +240,11 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'Passport'     => Laravel\Passport\Passport::class,
         'SEO' => Artesaos\SEOTools\Facades\SEOTools::class,
-
+        'Form' => Collective\Html\FormFacade::class,
+        'Html' => Collective\Html\HtmlFacade::class,
+        'Flash'     => Laracasts\Flash\Flash::class,
+        'Cart' => Gloudemans\Shoppingcart\Facades\Cart::class,
+        'JsValidator' => Proengsoft\JsValidation\Facades\JsValidatorFacade::class,
     ],
 
 ];
